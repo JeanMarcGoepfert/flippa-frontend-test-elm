@@ -4,7 +4,9 @@
   "description": "flippa front end test",
   "main": "index.js",
   "scripts": {
-    "start" : "node index.js"
+    "start": "node index.js",
+    "build": "webpack --mode=production",
+    "dev": "webpack --mode=development -w"
   },
   "keywords": [
     "sitepoint"
@@ -17,5 +19,10 @@
     "express": "^4.11.0",
     "lodash": "^2.4.1",
     "morgan": "^1.5.1"
+  },
+  "devDependencies": {
+    "elm-webpack-loader": "^4.5.0",
+    "webpack": "^4.8.3",
+    "webpack-cli": "^2.1.3"
   }
 }
