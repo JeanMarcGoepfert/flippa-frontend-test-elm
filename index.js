@@ -18,7 +18,7 @@ function sendFile(name) {
 }
 
 app.get("/", sendFile("index.html"));
-app.get("/app.js", sendFile("app.js"));
+app.get("/bundle.js", sendFile("bundle.js"));
 app.get("/app.css", sendFile("app.css"));
 
 // [json] GET /api/v1/counters
