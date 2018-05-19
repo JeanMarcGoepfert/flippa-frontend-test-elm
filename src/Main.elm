@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Html exposing (Html, text, div, span, input, form, button)
 import Html.Attributes exposing (placeholder, type_, value)
-import Html.Events exposing (onSubmit, onInput)
+import Html.Events exposing (onSubmit, onInput, onClick)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -59,6 +59,8 @@ type Msg
     | SubmitNewItem
     | ChangeNewItem String
     | CreateItem (Result Http.Error (List Item))
+    | IncrementItem String
+    | IncrementItemResponse (Result Http.Error (List Item))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -74,6 +76,12 @@ update msg model =
             ( { model | loading = False }, Cmd.none )
 
         CreateItem (Ok items) ->
+            ( { model | loading = False, items = items }, Cmd.none )
+
+        IncrementItemResponse (Err error) ->
+            ( { model | loading = False }, Cmd.none )
+
+        IncrementItemResponse (Ok items) ->
             ( { model | loading = False, items = items }, Cmd.none )
 
         CreateItem (Err error) ->
@@ -95,6 +103,11 @@ update msg model =
             in
                 ( { model | itemForm = itemForm }, Cmd.none )
 
+        IncrementItem itemId ->
+            ( { model | loading = True }
+            , incrementItem itemId
+            )
+
 
 
 -- HTTTP
@@ -110,16 +123,22 @@ createItem itemName =
     let
         body =
             itemName
-                |> itemEncoder
+                |> (\name -> Encode.object [ ( "title", Encode.string name ) ])
                 |> Http.jsonBody
     in
         Http.send CreateItem (Http.post "/api/v1/counter" body decodeItems)
 
 
-itemEncoder : String -> Encode.Value
-itemEncoder itemName =
-    Encode.object
-        [ ( "title", Encode.string itemName ) ]
+incrementItem : String -> Cmd Msg
+incrementItem itemId =
+    let
+        body =
+            itemId
+                |> (\id -> Encode.object [ ( "id", Encode.string id ) ])
+                |> Http.jsonBody
+    in
+        Http.send IncrementItemResponse
+            (Http.post "/api/v1/counter/inc" body decodeItems)
 
 
 decodeItems : Decode.Decoder (List Item)
@@ -178,4 +197,5 @@ itemView item =
         [ span [] [ text ("id: " ++ item.id ++ ", ") ]
         , span [] [ text ("title: " ++ item.title ++ ", ") ]
         , span [] [ text ("count:  " ++ toString item.count) ]
+        , button [ onClick (IncrementItem item.id) ] [ text "+" ]
         ]
