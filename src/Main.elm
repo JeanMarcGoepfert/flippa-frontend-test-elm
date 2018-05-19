@@ -55,7 +55,7 @@ init =
 
 type Msg
     = Init
-    | GetItems (Result Http.Error (List Item))
+    | GetItemsResponse (Result Http.Error (List Item))
     | SubmitNewItem
     | ChangeNewItem String
     | CreateItem (Result Http.Error (List Item))
@@ -69,10 +69,10 @@ update msg model =
         Init ->
             ( model, Cmd.none )
 
-        GetItems (Ok items) ->
+        GetItemsResponse (Ok items) ->
             ( { model | loading = False, items = items }, Cmd.none )
 
-        GetItems (Err error) ->
+        GetItemsResponse (Err error) ->
             ( { model | loading = False }, Cmd.none )
 
         CreateItem (Ok items) ->
@@ -115,7 +115,7 @@ update msg model =
 
 getItems : Cmd Msg
 getItems =
-    Http.send GetItems (Http.get "/api/v1/counters" decodeItems)
+    Http.send GetItemsResponse (Http.get "/api/v1/counters" decodeItems)
 
 
 createItem : String -> Cmd Msg
