@@ -1,6 +1,8 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, span)
+import Html exposing (Html, text, div, span, input, form, button)
+import Html.Attributes exposing (placeholder, type_, value)
+import Html.Events exposing (onSubmit, onInput)
 import Http
 import Json.Decode as Decode
 
@@ -25,9 +27,14 @@ type alias Item =
     }
 
 
+type alias ItemForm =
+    { title : String }
+
+
 type alias Model =
     { items : List Item
     , loading : Bool
+    , itemForm : ItemForm
     }
 
 
@@ -35,6 +42,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { items = []
       , loading = True
+      , itemForm = { title = "" }
       }
     , getItems
     )
@@ -47,6 +55,8 @@ init =
 type Msg
     = Init
     | GetItems (Result Http.Error (List Item))
+    | SubmitNewItem
+    | NewItemChange String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -60,6 +70,20 @@ update msg model =
 
         GetItems (Err error) ->
             ( { model | loading = False }, Cmd.none )
+
+        SubmitNewItem ->
+            let
+                itemForm =
+                    { title = "" }
+            in
+                ( { model | itemForm = itemForm }, Cmd.none )
+
+        NewItemChange newTitle ->
+            let
+                itemForm =
+                    { title = newTitle }
+            in
+                ( { model | itemForm = itemForm }, Cmd.none )
 
 
 
@@ -103,7 +127,22 @@ view model =
         div [] [ text "Loading" ]
     else
         div []
-            (List.map (\i -> itemView i) model.items)
+            [ newItem model
+            , div [] (List.map (\i -> itemView i) model.items)
+            ]
+
+
+newItem : Model -> Html Msg
+newItem model =
+    form [ onSubmit SubmitNewItem ]
+        [ input
+            [ placeholder "Enter an item"
+            , onInput NewItemChange
+            , value model.itemForm.title
+            ]
+            []
+        , button [ type_ "submit" ] [ text "Add" ]
+        ]
 
 
 itemView : Item -> Html Msg
