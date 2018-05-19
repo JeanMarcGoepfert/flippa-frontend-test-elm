@@ -61,6 +61,8 @@ type Msg
     | CreateItem (Result Http.Error (List Item))
     | IncrementItem String
     | IncrementItemResponse (Result Http.Error (List Item))
+    | DecrementItem String
+    | DecrementItemResponse (Result Http.Error (List Item))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -84,6 +86,12 @@ update msg model =
         IncrementItemResponse (Ok items) ->
             ( { model | loading = False, items = items }, Cmd.none )
 
+        DecrementItemResponse (Err error) ->
+            ( { model | loading = False }, Cmd.none )
+
+        DecrementItemResponse (Ok items) ->
+            ( { model | loading = False, items = items }, Cmd.none )
+
         CreateItem (Err error) ->
             ( { model | loading = False }, Cmd.none )
 
@@ -104,9 +112,10 @@ update msg model =
                 ( { model | itemForm = itemForm }, Cmd.none )
 
         IncrementItem itemId ->
-            ( { model | loading = True }
-            , incrementItem itemId
-            )
+            ( { model | loading = True }, incrementItem itemId )
+
+        DecrementItem itemId ->
+            ( { model | loading = True }, decrementItem itemId )
 
 
 
@@ -139,6 +148,18 @@ incrementItem itemId =
     in
         Http.send IncrementItemResponse
             (Http.post "/api/v1/counter/inc" body decodeItems)
+
+
+decrementItem : String -> Cmd Msg
+decrementItem itemId =
+    let
+        body =
+            itemId
+                |> (\id -> Encode.object [ ( "id", Encode.string id ) ])
+                |> Http.jsonBody
+    in
+        Http.send DecrementItemResponse
+            (Http.post "/api/v1/counter/dec" body decodeItems)
 
 
 decodeItems : Decode.Decoder (List Item)
@@ -197,5 +218,6 @@ itemView item =
         [ span [] [ text ("id: " ++ item.id ++ ", ") ]
         , span [] [ text ("title: " ++ item.title ++ ", ") ]
         , span [] [ text ("count:  " ++ toString item.count) ]
+        , button [ onClick (DecrementItem item.id) ] [ text "-" ]
         , button [ onClick (IncrementItem item.id) ] [ text "+" ]
         ]
