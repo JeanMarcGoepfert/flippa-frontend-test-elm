@@ -60,6 +60,7 @@ type Msg
     | ChangeNewItem String
     | IncrementItem String
     | DecrementItem String
+    | DeleteItem String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -95,6 +96,9 @@ update msg model =
 
         DecrementItem itemId ->
             ( { model | loading = True }, decrementItem itemId )
+
+        DeleteItem itemId ->
+            ( { model | loading = True }, deleteItem itemId )
 
 
 
@@ -139,6 +143,31 @@ decrementItem itemId =
     in
         Http.send GetItemsResponse
             (Http.post "/api/v1/counter/dec" body decodeItems)
+
+
+deleteItem : String -> Cmd Msg
+deleteItem itemId =
+    let
+        body =
+            itemId
+                |> (\id -> Encode.object [ ( "id", Encode.string id ) ])
+                |> Http.jsonBody
+    in
+        Http.send GetItemsResponse
+            (delete "/api/v1/counter" body decodeItems)
+
+
+delete : String -> Http.Body -> Decode.Decoder a -> Http.Request a
+delete url body decoder =
+    Http.request
+        { method = "DELETE"
+        , headers = []
+        , url = url
+        , body = body
+        , expect = Http.expectJson decoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
 
 
 decodeItems : Decode.Decoder (List Item)
@@ -199,4 +228,5 @@ itemView item =
         , span [] [ text ("count:  " ++ toString item.count) ]
         , button [ onClick (DecrementItem item.id) ] [ text "-" ]
         , button [ onClick (IncrementItem item.id) ] [ text "+" ]
+        , button [ onClick (DeleteItem item.id) ] [ text "delete" ]
         ]
