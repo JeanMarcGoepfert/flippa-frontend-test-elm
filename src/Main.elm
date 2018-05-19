@@ -58,11 +58,8 @@ type Msg
     | GetItemsResponse (Result Http.Error (List Item))
     | SubmitNewItem
     | ChangeNewItem String
-    | CreateItem (Result Http.Error (List Item))
     | IncrementItem String
-    | IncrementItemResponse (Result Http.Error (List Item))
     | DecrementItem String
-    | DecrementItemResponse (Result Http.Error (List Item))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -75,24 +72,6 @@ update msg model =
             ( { model | loading = False, items = items }, Cmd.none )
 
         GetItemsResponse (Err error) ->
-            ( { model | loading = False }, Cmd.none )
-
-        CreateItem (Ok items) ->
-            ( { model | loading = False, items = items }, Cmd.none )
-
-        IncrementItemResponse (Err error) ->
-            ( { model | loading = False }, Cmd.none )
-
-        IncrementItemResponse (Ok items) ->
-            ( { model | loading = False, items = items }, Cmd.none )
-
-        DecrementItemResponse (Err error) ->
-            ( { model | loading = False }, Cmd.none )
-
-        DecrementItemResponse (Ok items) ->
-            ( { model | loading = False, items = items }, Cmd.none )
-
-        CreateItem (Err error) ->
             ( { model | loading = False }, Cmd.none )
 
         SubmitNewItem ->
@@ -135,7 +114,7 @@ createItem itemName =
                 |> (\name -> Encode.object [ ( "title", Encode.string name ) ])
                 |> Http.jsonBody
     in
-        Http.send CreateItem (Http.post "/api/v1/counter" body decodeItems)
+        Http.send GetItemsResponse (Http.post "/api/v1/counter" body decodeItems)
 
 
 incrementItem : String -> Cmd Msg
@@ -146,7 +125,7 @@ incrementItem itemId =
                 |> (\id -> Encode.object [ ( "id", Encode.string id ) ])
                 |> Http.jsonBody
     in
-        Http.send IncrementItemResponse
+        Http.send GetItemsResponse
             (Http.post "/api/v1/counter/inc" body decodeItems)
 
 
@@ -158,7 +137,7 @@ decrementItem itemId =
                 |> (\id -> Encode.object [ ( "id", Encode.string id ) ])
                 |> Http.jsonBody
     in
-        Http.send DecrementItemResponse
+        Http.send GetItemsResponse
             (Http.post "/api/v1/counter/dec" body decodeItems)
 
 
