@@ -5,6 +5,7 @@ import Html.Attributes exposing (placeholder, type_, value)
 import Html.Events exposing (onSubmit, onInput)
 import Http
 import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 main =
@@ -57,6 +58,7 @@ type Msg
     | GetItems (Result Http.Error (List Item))
     | SubmitNewItem
     | ChangeNewItem String
+    | CreateItem (Result Http.Error (List Item))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -71,12 +73,20 @@ update msg model =
         GetItems (Err error) ->
             ( { model | loading = False }, Cmd.none )
 
+        CreateItem (Ok items) ->
+            ( { model | loading = False, items = items }, Cmd.none )
+
+        CreateItem (Err error) ->
+            ( { model | loading = False }, Cmd.none )
+
         SubmitNewItem ->
             let
                 itemForm =
                     { title = "" }
             in
-                ( { model | itemForm = itemForm }, Cmd.none )
+                ( { model | itemForm = itemForm, loading = True }
+                , createItem model.itemForm.title
+                )
 
         ChangeNewItem newTitle ->
             let
@@ -93,6 +103,23 @@ update msg model =
 getItems : Cmd Msg
 getItems =
     Http.send GetItems (Http.get "/api/v1/counters" decodeItems)
+
+
+createItem : String -> Cmd Msg
+createItem itemName =
+    let
+        body =
+            itemName
+                |> itemEncoder
+                |> Http.jsonBody
+    in
+        Http.send CreateItem (Http.post "/api/v1/counter" body decodeItems)
+
+
+itemEncoder : String -> Encode.Value
+itemEncoder itemName =
+    Encode.object
+        [ ( "title", Encode.string itemName ) ]
 
 
 decodeItems : Decode.Decoder (List Item)
