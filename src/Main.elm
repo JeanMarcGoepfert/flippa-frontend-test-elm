@@ -56,7 +56,7 @@ type Msg
     = Init
     | GetItems (Result Http.Error (List Item))
     | SubmitNewItem
-    | NewItemChange String
+    | ChangeNewItem String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,7 +78,7 @@ update msg model =
             in
                 ( { model | itemForm = itemForm }, Cmd.none )
 
-        NewItemChange newTitle ->
+        ChangeNewItem newTitle ->
             let
                 itemForm =
                     { title = newTitle }
@@ -137,7 +137,7 @@ newItem model =
     form [ onSubmit SubmitNewItem ]
         [ input
             [ placeholder "Enter an item"
-            , onInput NewItemChange
+            , onInput ChangeNewItem
             , value model.itemForm.title
             ]
             []
